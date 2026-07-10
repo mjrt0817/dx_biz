@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DXビジネス検定 700点突破アプリ Web版 v2.0</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">DX Business Certification Trainer</p>
+      <h1>DXビジネス検定 700点突破アプリ Web版 v2.0</h1>
+      <p class="subtitle">エキスパート合格に向けて、200問演習・用語80語・苦手復習・模擬試験をブラウザだけで実行できます。v2.0ではGoogleアカウントログイン、Firestore同期、詳細な履歴閲覧に対応しました。選択肢ランダム表示と改善済み問題データは維持しています。</p>
+    </div>
+    <div class="header-actions">
+      <button id="loginBtn" class="primary">Googleでログイン</button>
+      <button id="logoutBtn" class="ghost" disabled>ログアウト</button>
+      <button id="resetProgressBtn" class="ghost danger">学習履歴リセット</button>
+      <button id="importProgressBtn" class="ghost">履歴を読み込み</button>
+      <button id="exportProgressBtn" class="ghost">履歴を書き出し</button>
+      <input id="importProgressInput" type="file" accept="application/json,.json" class="hidden" />
+    </div>
+  </header>
+
+  <main>
+    <section id="homeScreen" class="screen active">
+      <div class="grid stats-grid">
+        <article class="stat-card">
+          <span>収録問題</span>
+          <strong id="totalQuestions">100</strong>
+          <small>公式シラバス12分類対応</small>
+        </article>
+        <article class="stat-card">
+          <span>学習済み</span>
+          <strong id="answeredCount">0</strong>
+          <small id="answeredRatio">0%</small>
+        </article>
+        <article class="stat-card">
+          <span>累計正答率</span>
+          <strong id="overallAccuracy">0%</strong>
+          <small>迷った問題は復習対象</small>
+        </article>
+        <article class="stat-card">
+          <span>本番換算目安</span>
+          <strong id="scoreLabel">未判定</strong>
+          <small id="scoreHelp">まずは10問解きましょう</small>
+        </article>
+      </div>
+
+      <section id="authPanel" class="panel auth-panel">
+        <div>
+          <div class="panel-title-row">
+            <h2>Googleアカウント同期</h2>
+            <span id="syncStatusBadge" class="pill muted-pill">未同期</span>
+          </div>
+          <p><strong id="authUserName">未ログイン</strong><br><span id="authUserEmail" class="muted">Googleログインすると履歴を同期できます</span></p>
+          <p class="muted">状態：<span id="authStatus">Firebase設定待ち</span></p>
+        </div>
+        <div class="quick-actions">
+          <button id="syncNowBtn" class="secondary" disabled>今すぐ同期</button>
+          <button id="pullCloudBtn" class="secondary" disabled>クラウドから読込</button>
+          <button id="pushCloudBtn" class="secondary" disabled>この端末を保存</button>
+        </div>
+      </section>
+
+      <section class="panel hero-panel">
+        <div>
+          <h2>今日のおすすめ</h2>
+          <p id="todayRecommendation">まずは「今日の10問」から始めましょう。解答後に解説と試験ポイントを確認できます。</p>
+        </div>
+        <div class="quick-actions">
+          <button data-action="start-daily" class="primary">今日の10問</button>
+          <button data-action="start-weak" class="secondary">苦手問題を復習</button>
+          <button data-action="open-categories" class="secondary">分野別に学ぶ</button>
+          <button data-action="open-mocks" class="secondary">模擬試験</button>
+          <button data-action="open-history" class="secondary">履歴を詳しく見る</button>
+        </div>
+      </section>
+
+      <section class="panel data-panel">
+        <div class="panel-title-row">
+          <h2>学習履歴の引き継ぎ</h2>
+          <span class="pill muted-pill">v2.0</span>
+        </div>
+        <p class="muted">Googleログイン後は、学習履歴がFirestoreに保存され、別PC・スマホでも同じGoogleアカウントで読み込めます。JSONの書き出し／読み込みもバックアップ用として残しています。</p>
+      </section>
+
+      <section class="two-column">
+        <article class="panel">
+          <div class="panel-title-row">
+            <h2>カテゴリ別の状況</h2>
+            <button data-action="open-categories" class="text-btn">すべて表示</button>
+          </div>
+          <div id="categorySummary" class="category-list compact"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title-row">
+            <h2>用語カード</h2>
+            <button data-action="open-terms" class="text-btn">開く</button>
+          </div>
+          <p class="muted">用語・具体例・試験ポイントを短時間で確認します。</p>
+          <div id="termPreview" class="term-preview"></div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>直近の模試・演習結果</h2>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </section>
+
+    <section id="categoryScreen" class="screen">
+      <div class="toolbar">
+        <button data-action="go-home" class="ghost">← ホームへ</button>
+        <h2>分野別に学ぶ</h2>
+      </div>
+      <div id="categoryCards" class="category-grid"></div>
+    </section>
+
+    <section id="mockScreen" class="screen">
+      <div class="toolbar">
+        <button data-action="go-home" class="ghost">← ホームへ</button>
+        <h2>模擬試験</h2>
+      </div>
+      <div class="mock-grid">
+        <article class="panel mock-card">
+          <h3>ミニ模試</h3>
+          <p>12問・8分。スキマ時間で速度感を確認します。</p>
+          <button data-mock="mini" class="primary">開始</button>
+        </article>
+        <article class="panel mock-card">
+          <h3>ハーフ模試</h3>
+          <p>48問・30分。本番前の中間確認に使います。</p>
+          <button data-mock="half" class="primary">開始</button>
+        </article>
+        <article class="panel mock-card">
+          <h3>本番模試</h3>
+          <p>96問・60分。本番と同じ時間配分で解きます。</p>
+          <button data-mock="full" class="primary">開始</button>
+        </article>
+      </div>
+    </section>
+
+    <section id="termScreen" class="screen">
+      <div class="toolbar">
+        <button data-action="go-home" class="ghost">← ホームへ</button>
+        <h2>用語カード</h2>
+      </div>
+      <div class="search-row">
+        <input id="termSearch" type="search" placeholder="用語・関連語で検索" />
+        <select id="termCategoryFilter"></select>
+      </div>
+      <div id="termList" class="term-list"></div>
+    </section>
+
+    <section id="historyScreen" class="screen">
+      <div class="toolbar">
+        <button data-action="go-home" class="ghost">← ホームへ</button>
+        <h2>学習履歴</h2>
+      </div>
+      <section class="two-column">
+        <article class="panel">
+          <div class="panel-title-row">
+            <h3>カテゴリ別履歴</h3>
+            <span class="pill muted-pill">正答率・学習済み</span>
+          </div>
+          <div id="historyCategoryList" class="category-list"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-title-row">
+            <h3>復習対象</h3>
+            <button data-action="start-weak" class="text-btn">復習を開始</button>
+          </div>
+          <div id="historyWeakList" class="mistake-list"></div>
+        </article>
+      </section>
+      <section class="panel">
+        <div class="panel-title-row">
+          <h3>演習・模試の履歴</h3>
+          <span class="pill muted-pill">最大200件保存</span>
+        </div>
+        <div id="historyDetailList" class="history-list"></div>
+      </section>
+    </section>
+
+    <section id="quizScreen" class="screen">
+      <div class="quiz-topbar">
+        <button id="exitQuizBtn" class="ghost">← 中断</button>
+        <div class="quiz-meta">
+          <span id="quizModeLabel">演習</span>
+          <span id="quizProgress">1 / 10</span>
+          <span id="timerDisplay" class="timer hidden">00:00</span>
+        </div>
+      </div>
+
+      <article class="quiz-card">
+        <div class="question-header">
+          <span id="questionCategory" class="pill">カテゴリ</span>
+          <span id="questionDifficulty" class="pill muted-pill">standard</span>
+          <span id="questionType" class="pill muted-pill">4択</span>
+        </div>
+        <h2 id="questionText"></h2>
+        <div id="choices" class="choices"></div>
+        <label class="uncertain-row">
+          <input id="uncertainCheck" type="checkbox" />
+          迷ったので復習対象にする
+        </label>
+        <div id="answerPanel" class="answer-panel hidden"></div>
+        <div class="quiz-actions">
+          <button id="nextQuestionBtn" class="primary hidden">次の問題へ</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="resultScreen" class="screen">
+      <div class="toolbar">
+        <button data-action="go-home" class="ghost">← ホームへ</button>
+        <h2>結果</h2>
+      </div>
+      <article id="resultPanel" class="panel result-panel"></article>
+    </section>
+  </main>
+
+  <footer>
+    <p>このアプリの問題は学習用のオリジナル問題です。公式問題そのものではありません。</p>
+  </footer>
+
+  <script src="firebase-config.js"></script>
+  <script src="data.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
