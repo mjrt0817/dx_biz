@@ -1,13 +1,17 @@
 // Firebase設定ファイル
-// 1. Firebase ConsoleでWebアプリを作成
-// 2. 表示された firebaseConfig を下記に貼り替え
-// 3. Authentication > Sign-in method で Google を有効化
-// 4. Firestore Database を作成し、FIRESTORE_RULES.txt のルールを設定
+// DXビジネス検定 700点突破アプリ Web版 v2.1
+// Project: dx-biz
+//
+// 追加で必要なFirebase Console設定：
+// 1. Authentication > Sign-in method > Google を有効化
+// 2. Authentication > Settings > Authorized domains に公開先ドメインを追加
+// 3. Firestore Database を作成
+// 4. FIRESTORE_RULES.txt の内容を Firestore Rules に設定
 window.DX_BIZ_FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyB_JNkqvZvGV8IQdztEB8uB4KpjkAlxFMI",
+  authDomain: "dx-biz.firebaseapp.com",
+  projectId: "dx-biz",
+  storageBucket: "dx-biz.firebasestorage.app",
+  messagingSenderId: "198728192395",
+  appId: "1:198728192395:web:d79d9d2f886c3010dd5f8e"
 };

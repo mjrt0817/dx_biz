@@ -1,6 +1,6 @@
-# DXビジネス検定 700点突破アプリ Web版 v2.0
+# DXビジネス検定 700点突破アプリ Web版 v2.1
 
-v1.3を基準に、Googleアカウント同期と履歴閲覧を追加したWeb版です。
+v1.3を基準に、Googleアカウント同期と履歴閲覧を追加したWeb版です。v2.1では Firebase プロジェクト `dx-biz` の設定値を反映済みです。
 
 ## 主な機能
 
@@ -18,6 +18,19 @@ v1.3を基準に、Googleアカウント同期と履歴閲覧を追加したWeb�
 - Googleアカウントログイン
 - Firestoreによるクラウド同期
 - 詳細な学習履歴画面
+
+## v2.1で反映済みのFirebase設定
+
+```js
+window.DX_BIZ_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB_JNkqvZvGV8IQdztEB8uB4KpjkAlxFMI",
+  authDomain: "dx-biz.firebaseapp.com",
+  projectId: "dx-biz",
+  storageBucket: "dx-biz.firebasestorage.app",
+  messagingSenderId: "198728192395",
+  appId: "1:198728192395:web:d79d9d2f886c3010dd5f8e"
+};
+```
 
 ## Google同期の仕組み
 
@@ -39,20 +52,16 @@ Firebase Consoleで新規プロジェクトを作成します。
 
 プロジェクト設定からWebアプリを追加し、表示される `firebaseConfig` をコピーします。
 
-### 3. firebase-config.js を差し替え
+### 3. firebase-config.js の確認
 
-`firebase-config.js` の中身を、自分のFirebase設定値に差し替えます。
+v2.1では、`firebase-config.js` に以下の Firebase プロジェクト設定を反映済みです。
 
-```js
-window.DX_BIZ_FIREBASE_CONFIG = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
-};
+```text
+projectId: dx-biz
+authDomain: dx-biz.firebaseapp.com
 ```
+
+そのため、通常はこのファイルの差し替えは不要です。
 
 ### 4. Googleログインを有効化
 
@@ -113,4 +122,4 @@ v1.3以前の履歴を引き継ぐ場合は、次の手順です。
 
 - このアプリの問題は学習用のオリジナル問題です。公式問題そのものではありません。
 - FirebaseのAPIキーは一般的にクライアント側に含まれる前提の識別子ですが、Firestoreルールでユーザー本人以外が読めないように制御してください。
-- Googleログインの許可ドメインに、公開先ドメインを追加してください。
+- Googleログインの許可ドメインに、公開先ドメインを追加してください。Vercelで公開する場合は `xxxxx.vercel.app` を追加します。
