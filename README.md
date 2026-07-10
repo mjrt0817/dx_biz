@@ -1,6 +1,6 @@
-# DXビジネス検定 700点突破アプリ Web版 v2.1
+# DXビジネス検定 700点突破アプリ Web版 v2.2
 
-v1.3を基準に、Googleアカウント同期と履歴閲覧を追加したWeb版です。v2.1では Firebase プロジェクト `dx-biz` の設定値を反映済みです。
+v1.3を基準に、Googleアカウント同期と履歴閲覧を追加したWeb版です。v2.2では同期エラーの診断表示と接続テストを追加しています。Firebase プロジェクト `dx-biz` の設定値は反映済みです。
 
 ## 主な機能
 
@@ -95,6 +95,42 @@ service cloud.firestore {
 Vercel、GitHub Pages、Firebase Hostingなどに配置できます。
 
 Googleログインを使う場合は、`file://` で直接開くのではなく、`https://` のWebサイトとして公開してください。ローカル検証は `localhost` が無難です。
+
+
+## 同期エラーが出る場合
+
+Googleログインできているのに同期エラーになる場合は、Firebase AuthenticationではなくFirestore側の設定が原因であることが多いです。
+
+アプリの「接続テスト」ボタンを押すと、Firestoreへの書き込み・読み込みを確認し、エラーコードと確認ポイントを表示します。
+
+代表的なエラーは以下です。
+
+| エラーコード | 主な原因 | 対応 |
+|---|---|---|
+| permission-denied | Firestore Rulesが未設定、またはルールが違う | `FIRESTORE_RULES.txt` を貼り付けて公開 |
+| failed-precondition | Firestore Database未作成、またはモード不一致 | Firestore Databaseを作成 |
+| not-found | Firestore Databaseがない | Firestore Database作成状況を確認 |
+| unavailable | ネットワーク、広告ブロッカー、社内プロキシ等 | 別回線・別ブラウザで確認 |
+| unauthenticated | ログイン状態が切れている | ログアウト→再ログイン |
+
+同期で使う保存先は以下です。
+
+```text
+users/{ログインユーザーのuid}/apps/dxBizTrainer
+```
+
+Firestore Rulesは以下の形式にしてください。
+
+```js
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/apps/{appId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
 
 ## 既存履歴の引き継ぎ
 

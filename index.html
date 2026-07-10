@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DXビジネス検定 700点突破アプリ Web版 v2.0</title>
+  <title>DXビジネス検定 700点突破アプリ Web版 v2.2</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">DX Business Certification Trainer</p>
-      <h1>DXビジネス検定 700点突破アプリ Web版 v2.0</h1>
-      <p class="subtitle">エキスパート合格に向けて、200問演習・用語80語・苦手復習・模擬試験をブラウザだけで実行できます。v2.0ではGoogleアカウントログイン、Firestore同期、詳細な履歴閲覧に対応しました。選択肢ランダム表示と改善済み問題データは維持しています。</p>
+      <h1>DXビジネス検定 700点突破アプリ Web版 v2.2</h1>
+      <p class="subtitle">エキスパート合格に向けて、200問演習・用語80語・苦手復習・模擬試験をブラウザだけで実行できます。v2.2ではGoogleアカウント同期の診断表示を強化しました。選択肢ランダム表示と改善済み問題データは維持しています。</p>
     </div>
     <div class="header-actions">
       <button id="loginBtn" class="primary">Googleでログイン</button>
@@ -56,11 +56,13 @@
           </div>
           <p><strong id="authUserName">未ログイン</strong><br><span id="authUserEmail" class="muted">Googleログインすると履歴を同期できます</span></p>
           <p class="muted">状態：<span id="authStatus">Firebase設定待ち</span></p>
+          <pre id="syncErrorDetail" class="sync-error-detail hidden"></pre>
         </div>
         <div class="quick-actions">
           <button id="syncNowBtn" class="secondary" disabled>今すぐ同期</button>
           <button id="pullCloudBtn" class="secondary" disabled>クラウドから読込</button>
           <button id="pushCloudBtn" class="secondary" disabled>この端末を保存</button>
+          <button id="syncTestBtn" class="secondary" disabled>接続テスト</button>
         </div>
       </section>
 
@@ -81,7 +83,7 @@
       <section class="panel data-panel">
         <div class="panel-title-row">
           <h2>学習履歴の引き継ぎ</h2>
-          <span class="pill muted-pill">v2.0</span>
+          <span class="pill muted-pill">v2.2</span>
         </div>
         <p class="muted">Googleログイン後は、学習履歴がFirestoreに保存され、別PC・スマホでも同じGoogleアカウントで読み込めます。JSONの書き出し／読み込みもバックアップ用として残しています。</p>
       </section>

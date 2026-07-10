@@ -4,7 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 (() => {
   const DATA = window.DX_BIZ_DATA;
-  const APP_VERSION = '2.0';
+  const APP_VERSION = '2.2';
   const STORAGE_KEY = 'dxBizTrainerProgress.v1';
   const SESSION_KEY = 'dxBizTrainerCurrentSession.v1';
 
@@ -50,7 +50,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       'termSearch', 'termCategoryFilter', 'termList', 'quizModeLabel', 'quizProgress', 'timerDisplay',
       'questionCategory', 'questionDifficulty', 'questionType', 'questionText', 'choices', 'uncertainCheck',
       'answerPanel', 'nextQuestionBtn', 'exitQuizBtn', 'resultPanel', 'resetProgressBtn', 'importProgressBtn', 'importProgressInput', 'exportProgressBtn',
-      'authPanel', 'authStatus', 'authUserName', 'authUserEmail', 'loginBtn', 'logoutBtn', 'syncNowBtn', 'pullCloudBtn', 'pushCloudBtn',
+      'authPanel', 'authStatus', 'authUserName', 'authUserEmail', 'loginBtn', 'logoutBtn', 'syncNowBtn', 'pullCloudBtn', 'pushCloudBtn', 'syncTestBtn', 'syncErrorDetail',
       'historyScreen', 'historyDetailList', 'historyCategoryList', 'historyWeakList', 'openHistoryBtn', 'syncStatusBadge'
     ];
     ids.forEach(id => { els[id] = document.getElementById(id); });
@@ -104,6 +104,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     els.syncNowBtn?.addEventListener('click', () => syncWithCloud({ reason: 'manual-merge' }));
     els.pullCloudBtn?.addEventListener('click', pullCloudProgress);
     els.pushCloudBtn?.addEventListener('click', pushCloudProgress);
+    els.syncTestBtn?.addEventListener('click', testFirestoreConnection);
   }
 
   function createBlankProgress() {
@@ -878,16 +879,14 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       }, { merge: true });
       firebaseState.lastSyncAt = new Date().toISOString();
       firebaseState.status = '同期済み';
+      setSyncErrorDetail('');
       renderHome();
       renderCategoryScreen();
       renderTermScreen();
       renderHistoryScreen();
       renderAuthPanel();
     } catch (err) {
-      console.error(err);
-      firebaseState.status = '同期エラー';
-      renderAuthPanel(String(err?.message || err));
-      alert(`クラウド同期に失敗しました。Firebase設定・Firestoreルール・ネットワークを確認してください。\n${err?.message || err}`);
+      handleSyncError(err, 'クラウド同期');
     }
   }
 
@@ -904,14 +903,14 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       saveProgressLocalOnly();
       firebaseState.lastSyncAt = new Date().toISOString();
       firebaseState.status = 'クラウドから読込済み';
+      setSyncErrorDetail('');
       renderHome();
       renderCategoryScreen();
       renderTermScreen();
       renderHistoryScreen();
       renderAuthPanel();
     } catch (err) {
-      console.error(err);
-      alert(`クラウド履歴の読み込みに失敗しました。\n${err?.message || err}`);
+      handleSyncError(err, 'クラウド履歴の読み込み');
     }
   }
 
@@ -930,14 +929,74 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       }, { merge: true });
       firebaseState.lastSyncAt = new Date().toISOString();
       firebaseState.status = '同期済み';
+      setSyncErrorDetail('');
       renderAuthPanel();
       if (!options.silent) alert('クラウドへ保存しました。');
     } catch (err) {
-      console.error(err);
-      firebaseState.status = '同期エラー';
-      renderAuthPanel(String(err?.message || err));
-      if (!options.silent) alert(`クラウド保存に失敗しました。\n${err?.message || err}`);
+      handleSyncError(err, 'クラウド保存', { silent: options.silent });
     }
+  }
+
+  async function testFirestoreConnection() {
+    const ref = getUserProgressRef();
+    if (!ref) { alert('Googleログイン後に利用できます。'); return; }
+    try {
+      firebaseState.status = 'Firestore接続テスト中';
+      renderAuthPanel();
+      await setDoc(ref, {
+        app: 'DXビジネス検定 700点突破アプリ',
+        appVersion: APP_VERSION,
+        connectionTestAt: new Date().toISOString(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error('書き込み後の読み込みに失敗しました。');
+      firebaseState.status = '接続テスト成功';
+      firebaseState.lastSyncAt = new Date().toISOString();
+      setSyncErrorDetail('');
+      renderAuthPanel();
+      alert('Firestoreへの書き込み・読み込みに成功しました。同期設定は正常です。');
+    } catch (err) {
+      handleSyncError(err, 'Firestore接続テスト');
+    }
+  }
+
+  function handleSyncError(err, label, options = {}) {
+    console.error(err);
+    firebaseState.status = '同期エラー';
+    const message = buildFirebaseErrorMessage(err, label);
+    setSyncErrorDetail(message);
+    renderAuthPanel(message);
+    if (!options.silent) alert(message);
+  }
+
+  function setSyncErrorDetail(message) {
+    if (!els.syncErrorDetail) return;
+    els.syncErrorDetail.textContent = message || '';
+    els.syncErrorDetail.classList.toggle('hidden', !message);
+  }
+
+  function buildFirebaseErrorMessage(err, label) {
+    const code = err?.code || 'unknown';
+    const rawMessage = err?.message || String(err || '不明なエラー');
+    const hintMap = {
+      'permission-denied': 'Firestore Rulesが未設定、または users/{uid}/apps/dxBizTrainer への読み書きが許可されていない可能性が高いです。',
+      'unauthenticated': 'ログイン状態が切れている可能性があります。ログアウト→再ログインしてください。',
+      'failed-precondition': 'Firestore Databaseが未作成、またはFirestoreがDatastoreモードになっている可能性があります。Firebase ConsoleでFirestore Databaseを作成してください。',
+      'not-found': 'Firestore Databaseまたは対象ドキュメントが見つかりません。Firestore Databaseが作成済みか確認してください。',
+      'unavailable': 'ネットワーク、広告ブロッカー、社内プロキシ、Firebase側の一時的な接続問題の可能性があります。',
+      'resource-exhausted': 'Firebase/Firestoreの無料枠やクォータに達している可能性があります。',
+      'invalid-argument': 'Firestoreへ保存するデータ形式に問題がある可能性があります。',
+    };
+    const hint = hintMap[code] || 'Firebase設定、Firestore Database、Firestore Rules、公開ドメイン、ネットワークを確認してください。';
+    return `${label}に失敗しました。
+
+エラーコード: ${code}
+内容: ${rawMessage}
+
+確認ポイント: ${hint}
+
+Firestore Rulesは同梱の FIRESTORE_RULES.txt をそのまま貼り付けて公開してください。`;
   }
 
   function renderAuthPanel(errorMessage = '') {
@@ -955,6 +1014,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     els.syncNowBtn.disabled = !user;
     els.pullCloudBtn.disabled = !user;
     els.pushCloudBtn.disabled = !user;
+    if (els.syncTestBtn) els.syncTestBtn.disabled = !user;
     els.authPanel?.classList.toggle('auth-disabled', !configured);
     if (errorMessage) console.warn(errorMessage);
   }

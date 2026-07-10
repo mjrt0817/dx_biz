@@ -282,3 +282,17 @@ input, select {
     gap: .35rem;
   }
 }
+
+.sync-error-detail {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: 12px;
+  background: rgba(254, 242, 242, 0.95);
+  color: #7f1d1d;
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 100%;
+  overflow-x: auto;
+}
