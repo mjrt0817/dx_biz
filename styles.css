@@ -102,3 +102,12 @@ input:not([type="checkbox"]),select{border:1px solid #cbd6df;background:#fff;col
 @media (max-width:1200px){.hero-panel{grid-template-columns:1fr}.hero-panel .quick-actions{grid-template-columns:repeat(3,minmax(0,1fr));justify-content:flex-start}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:980px){.app-shell{grid-template-columns:1fr}.app-sidebar{position:relative;height:auto;padding:.55rem 1rem;display:block}.sidebar-brand{display:none}.sidebar-section-caption{display:none}.sidebar-footer{display:none}.sidebar-nav{display:flex;gap:.35rem;overflow-x:auto;scrollbar-width:thin}.sidebar-nav .nav-item{flex:none;width:auto;white-space:nowrap;padding:.62rem .85rem;font-size:.82rem}.nav-indicator{display:none}.app-header{min-height:0}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two-column{grid-template-columns:1fr}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:650px){html{font-size:14px}.app-header{padding:1rem;align-items:flex-start;flex-direction:column}.app-header h1{font-size:1.3rem}.header-actions{width:100%;justify-content:flex-start}main{padding:1rem}.stats-grid{gap:.5rem}.stat-card{padding:.8rem}.stat-card strong{font-size:1.55rem}.section-heading:not(:first-child){margin-top:1.25rem}.hero-panel{padding:1.1rem}.hero-panel .quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.auth-panel{flex-direction:column;align-items:stretch}.auth-panel .quick-actions{justify-content:flex-start}.category-grid,.term-list,.mock-grid,.result-grid{grid-template-columns:1fr}.search-row{grid-template-columns:1fr}.category-row{grid-template-columns:2rem minmax(0,1fr) 3.1rem}.category-row .small-stat:last-child{display:none}.quiz-topbar{flex-direction:column;align-items:flex-start}.quiz-card{padding:1.05rem}.choice-btn{padding:.78rem;line-height:1.8}#questionText{font-size:1.08rem}.term-card dl{grid-template-columns:1fr;gap:.1rem}.term-card dt{margin-top:.55rem}.term-card dd{padding-bottom:.35rem}.panel{padding:1rem}.utility-panel{right:auto;left:0}}
+/* v2.6: prevent the horizontal navigation's intrinsic width from expanding
+   the mobile viewport; allow the menu itself to scroll horizontally. */
+@media (max-width:980px){
+  .app-shell{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;overflow-x:clip}
+  .app-sidebar,.workspace,.sidebar-nav{min-width:0;max-width:100%}
+  .app-sidebar{width:100%}
+  .sidebar-nav{overflow-x:auto;overscroll-behavior-x:contain}
+  .app-header,main{min-width:0;max-width:100%}
+}

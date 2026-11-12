@@ -1,0 +1,28 @@
+{
+  "existing_questions": 485,
+  "added_questions": 100,
+  "total_questions": 585,
+  "existing_cards": 161,
+  "added_cards": 35,
+  "total_cards": 196,
+  "answer_distribution": {
+    "2": 25,
+    "1": 25,
+    "4": 25,
+    "3": 25
+  },
+  "new_by_category": {
+    "01": 9,
+    "02": 7,
+    "03": 9,
+    "04": 13,
+    "05": 5,
+    "06": 5,
+    "07": 15,
+    "08": 10,
+    "10": 9,
+    "11": 17,
+    "12": 1
+  },
+  "category_alignment_adjustments": 15
+}

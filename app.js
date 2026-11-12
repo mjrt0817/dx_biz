@@ -4,7 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 (() => {
   const DATA = window.DX_BIZ_DATA;
-  const APP_VERSION = '2.4';
+  const APP_VERSION = '2.6';
   const STORAGE_KEY = 'dxBizTrainerProgress.v1';
   const SESSION_KEY = 'dxBizTrainerCurrentSession.v1';
 
@@ -69,6 +69,11 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
         if (action === 'open-history') showScreen('historyScreen');
         if (action === 'start-daily') startQuiz('今日の10問', selectDailyQuestions(), 0);
         if (action === 'start-case') startQuiz('サービス事例10問', selectCaseStudyQuestions(10), 0);
+        if (action === 'start-v26') startQuiz('今回の予想問題 10問', selectV26Questions(10), 0);
+        if (action === 'start-v26-20') startQuiz('今回の予想問題 20問', selectV26Questions(20), 0);
+        if (action === 'open-v26-terms') { showScreen('termScreen'); els.termCategoryFilter.value = 'new'; renderTerms(); }
+        if (action === 'start-latest') startQuiz('追加予想問題 10問', selectLatestQuestions(10), 0);
+        if (action === 'start-latest-20') startQuiz('追加予想問題 20問', selectLatestQuestions(20), 0);
         if (action === 'start-exam-style') startQuiz('実戦形式 10問', selectExamStyleQuestions(10), 0);
         if (action === 'start-exam-style-20') startQuiz('実戦形式 20問', selectExamStyleQuestions(20), 0);
         if (action === 'start-weak') startWeakQuiz();
@@ -355,7 +360,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   }
 
   function renderTermScreen() {
-    els.termCategoryFilter.innerHTML = '<option value="">すべてのカテゴリ</option><option value="case">サービス事例カテゴリ</option>' + DATA.categories.map(c => `<option value="${c.category_id}">${c.category_id} ${escapeHtml(c.category_name)}</option>`).join('');
+    els.termCategoryFilter.innerHTML = '<option value="">すべてのカテゴリ</option><option value="new">今回の追加カード</option><option value="case">サービス事例カテゴリ</option>' + DATA.categories.map(c => `<option value="${c.category_id}">${c.category_id} ${escapeHtml(c.category_name)}</option>`).join('');
     renderTerms();
   }
 
@@ -364,7 +369,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     const categoryId = els.termCategoryFilter.value;
     const terms = (DATA.terms || []).filter(t => {
       const text = `${t.term} ${t.reading} ${t.definition} ${t.example} ${(t.relatedTerms || []).join(' ')}`.toLowerCase();
-      const categoryMatch = !categoryId || (categoryId === 'case' ? (t.isCaseStudy || ['09','10','11','12'].includes(t.categoryId)) : t.categoryId === categoryId);
+      const categoryMatch = !categoryId || (categoryId === 'new' ? t.practiceBatch === '2026-11-12-pm' : (categoryId === 'case' ? (t.isCaseStudy || ['09','10','11','12'].includes(t.categoryId)) : t.categoryId === categoryId));
       return (!keyword || text.includes(keyword)) && categoryMatch;
     });
     els.termList.innerHTML = terms.map(t => `
@@ -395,8 +400,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
   function selectDailyQuestions() {
     const questions = getActiveQuestions();
-    const sorted = [...questions].sort((a, b) => priorityScore(b) - priorityScore(a));
-    return shuffle(sorted.slice(0, 24)).slice(0, 10);
+    const sorted = shuffle(questions).sort((a, b) => priorityScore(b) - priorityScore(a));
+    return shuffle(sorted.slice(0, Math.min(100, sorted.length))).slice(0, 10);
   }
 
   function priorityScore(q) {
@@ -419,6 +424,14 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   function selectMockQuestions(count) {
     const questions = getActiveQuestions();
     return shuffle(questions).slice(0, Math.min(count, questions.length));
+  }
+
+  function selectV26Questions(count = 10) {
+    return takeWithPriority(getActiveQuestions().filter(q => q.practiceBatch === '2026-11-12-pm'), count);
+  }
+
+  function selectLatestQuestions(count = 10) {
+    return takeWithPriority(getActiveQuestions().filter(q => q.practiceBatch === '2026-11-12'), count);
   }
 
   function selectExamStyleQuestions(count = 10) {
@@ -445,8 +458,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   }
 
   function takeWithPriority(questions, count) {
-    const sorted = [...questions].sort((a, b) => priorityScore(b) - priorityScore(a));
-    const front = sorted.slice(0, Math.min(sorted.length, count * 2));
+    const sorted = shuffle(questions).sort((a, b) => priorityScore(b) - priorityScore(a));
+    const front = sorted.slice(0, Math.min(sorted.length, Math.max(count * 4, 60)));
     return shuffle(front).slice(0, Math.min(count, questions.length));
   }
 
@@ -754,7 +767,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dx-biz-progress-v2_4-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `dx-biz-progress-v2_6-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();

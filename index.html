@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DXビジネス検定 | 学習管理 v2.4</title>
+  <title>DXビジネス検定 | 学習管理 v2.6</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -17,12 +17,14 @@
       <nav class="sidebar-nav">
         <button data-action="go-home" class="nav-item active"><span class="nav-indicator"></span>ダッシュボード</button>
         <button data-action="start-exam-style" class="nav-item"><span class="nav-indicator"></span>実戦形式の演習</button>
+        <button data-action="start-v26" class="nav-item"><span class="nav-indicator"></span>今回の予想問題 100問</button>
+        <button data-action="start-latest" class="nav-item"><span class="nav-indicator"></span>前回の予想問題 82問</button>
         <button data-action="open-categories" class="nav-item"><span class="nav-indicator"></span>分野別演習</button>
         <button data-action="open-mocks" class="nav-item"><span class="nav-indicator"></span>模擬試験</button>
         <button data-action="open-terms" class="nav-item"><span class="nav-indicator"></span>用語・事例カード</button>
         <button data-action="open-history" class="nav-item"><span class="nav-indicator"></span>学習履歴</button>
       </nav>
-      <div class="sidebar-footer"><span class="dot"></span> Google同期対応<br><span class="sidebar-footnote">オリジナル問題集 v2.4</span></div>
+      <div class="sidebar-footer"><span class="dot"></span> Google同期対応<br><span class="sidebar-footnote">オリジナル問題集 v2.6</span></div>
     </aside>
     <div class="workspace">
       <header class="app-header">
@@ -77,10 +79,15 @@
           <div class="micro-label">RECOMMENDED</div>
           <h2>実戦形式で学習する</h2>
           <p id="todayRecommendation">アップロードした問題例の傾向に沿って、企業事例や施策判断を反復します。</p>
-          <small class="muted">新規実戦問題は旧問題と区別して出題できます。公式の過去問ではありません。</small>
+          <small class="muted">追加の予想問題も独立したモードで出題します。公式の問題を転載したものではありません。</small>
         </div>
         <div class="quick-actions">
-          <button data-action="start-exam-style" class="primary">実戦問題 10問</button>
+          <button data-action="start-v26" class="primary">今回の予想問題 10問</button>
+          <button data-action="start-v26-20" class="secondary">今回の予想問題 20問</button>
+          <button data-action="open-v26-terms" class="secondary">今回の追加カード</button>
+          <button data-action="start-latest" class="secondary">前回の予想問題 10問</button>
+          <button data-action="start-latest-20" class="secondary">前回の予想問題 20問</button>
+          <button data-action="start-exam-style" class="secondary">実戦問題 10問</button>
           <button data-action="start-exam-style-20" class="secondary">実戦問題 20問</button>
           <button data-action="start-daily" class="secondary">今日の10問</button>
           <button data-action="start-case" class="secondary">サービス事例10問</button>
@@ -111,9 +118,9 @@
       <details class="panel data-panel"><summary>履歴の引き継ぎ方法を確認する</summary>
         <div class="panel-title-row">
           <h2>学習履歴の引き継ぎ</h2>
-          <span class="pill muted-pill">v2.4</span>
+          <span class="pill muted-pill">v2.6</span>
         </div>
-        <p class="muted">Googleログイン後は、学習履歴がFirestoreに保存され、別PC・スマホでも同じGoogleアカウントで読み込めます。v2.4では実戦形式のオリジナル問題を追加しています。JSONの書き出し／読み込みもバックアップ用として残しています。</p>
+        <p class="muted">Googleログイン後は、学習履歴がFirestoreに保存され、別PC・スマホでも同じGoogleアカウントで読み込めます。v2.6では新しい60問の問題例から論点を抽出し、予想問題100問を追加しています。前回82問も維持しています。JSONの書き出し／読み込みもバックアップ用として残しています。</p>
       </details>
 
       <div class="section-heading"><span>学習進捗</span><small>分野別 / 最近の演習</small></div>
@@ -155,7 +162,7 @@
         <button data-action="go-home" class="ghost">← ホームへ</button>
         <h2>模擬試験</h2>
       </div>
-      <p class="support-note">模試は旧問題と新問題の混在です。実戦問題だけを解きたい場合はダッシュボードの「実戦問題」を選んでください。</p>
+      <p class="support-note">模試は旧問題と新問題の混在です。新規100問だけを解きたい場合はダッシュボードの「今回の予想問題」を選んでください。</p>
       <div class="mock-grid">
         <article class="panel mock-card">
           <h3>ミニ模試</h3>

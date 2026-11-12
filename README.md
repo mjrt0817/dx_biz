@@ -1,57 +1,53 @@
-# DXビジネス検定 学習管理アプリ Web v2.4
+# DXビジネス検定 学習管理 Web v2.6
 
-**問題403問、用語・企業サービスカード140件。**
+**585問・196カード**。前版 v2.5 を基準にした更新版です。
 
-## 学習内容
+## 新規追加
 
-- 実戦形式10問／20問：アップロードいただいた問題例の傾向に沿った **オリジナル51問**から出題。
-- 今日の10問、サービス事例10問、分野別10／20問、苦手問題の復習。
-- 12問／48問／96問の模試（時間制限あり、旧問題と実戦問題の混在）。
-- 解答後の解説と選択肢の説明、毎回の正答位置シャッフル。
-- 用語・企業事例カード、学習履歴閲覧、ローカルバックアップとGoogle同期。
+- ユーザー提供の60問のスクリーンショットを1〜60番まで目視確認し、論点に分類。
+- 既存485問を維持して**独自予想問題100問（Q486〜Q585）**を追加。
+- **追加カード35件（T162〜T196）**を追加。
+- **今回の予想問題10問／20問** メニューを追加。前回の82問演習は残した。
+- 新規100問は実戦形式の出題プールにも含む。
+- 用語カードで「今回の追加カード」のフィルタを利用可能。
+- 「今日の10問」や実戦形式で、先頭の旧問題だけに抽選が偏る問題を改善。
+- 業務アプリ風デザイン、Googleログイン、Firestore同期、履歴読込／書出しを維持。
 
-## 設置方法
+## 更新と履歴
 
-1. フォルダの内容を**まとめて**Webサーバーの公開ディレクトリへ配置します（Firebase Hosting、Vercel、Xserverなどの静的ホスティングで可）。
-2. HTTPSで公開してください。Googleログインは `file://` では動作しません。
-3. `firebase-config.js` は既に提供済みの `dx-biz` プロジェクトのWebアプリ設定が入っています。Firebase Consoleで Google 認証を有効にしてください。
-4. Firebase Authentication → Settings → Authorized domains に、公開先ドメインを登録してください。
-5. Firestore Databaseのルールに `FIRESTORE_RULES.txt` を参考にした本人のみアクセス可能なルールを設定してください。
-6. Googleでログインし、画面の「接続テスト」→「今すぐ同期」を実行します。
+1. 更新前に「データ管理」→「履歴を書き出し」でバックアップ。
+2. ZIPを展開し、その中のフォルダのファイルを既存ホスティングへ上書きデプロイ。
+3. 同じGoogleアカウントでログインし、クラウドから履歴を取得できることを確認。
+4. 接続テストと今すぐ同期を確認。
 
-`firebase.json` はFirebase Hosting用です。設定済みのサイトがある場合は、既存のディレクトリ構成を維持したまま差し替えてください。
+問題ID Q001〜Q485は変更せず、T001〜T161も維持。LocalStorageキー・Firestoreの保存パス・Firebase設定ファイルに変更はありません。
 
-## v2.3からの移行
+## 問題の品質・位置づけ
 
-- **同じURLで上書きデプロイ**する場合はLocalStorageに記録済みの学習履歴を通常は維持できます。
-- 同じGoogleアカウントでログインすればFirestore上の履歴にアクセスできます。
-- 念のため更新前に、メニューの「データ管理」→「履歴を書き出し」からJSONをバックアップしてください。
-- URLやブラウザを変更する際は、v2.4へJSONをインポート→Googleでログイン→「今すぐ同期」で引き継げます。
-- 既存の `Q001`〜`Q352` はIDを変更していません。新しい問題は `Q353`〜`Q403` です。
-- データが消失しないよう、旧環境と新環境の両方で頻繁に同期する運用は避けてください。
+- 追加問題は**スクリーンショットの文面を複製したものではありません**。出題傾向から新たな設問・選択肢・解説を作成。
+- 選択肢は4択で、正解番号の固定配分は**各25問**。実際の表示時もランダム化。
+- 誤答には各選択肢に対応する理由を用意。
+- 企業・サービス固有の機能は公開情報に基づき作問。料金・数値など変動しやすい細部は出題対象外とした。
+- **公式問題の転載でも、出題・合格を保証するものでもありません。** 公式eラーニングを主教材として併用してください。
 
 ## ファイル
 
-- `index.html` / `styles.css` / `app.js`：画面・UI・学習ロジック
-- `data.js`：ブラウザで利用するデータ（403問+140カード）
-- `learning_data_403.json`：追加後の全データ
-- `exam_style_questions_added.csv`：実戦51問の編集用CSV
-- `questions_352.csv`, `service_case_questions_152.csv`, `terms_140.csv`：旧版の元データ
-- `firebase-config.js`：Google認証設定
-- `FIRESTORE_RULES.txt`：本人のみ許可するFirestoreルール例
-- `CHANGELOG_v2_4.md`：変更内容
+- `index.html`, `app.js`, `styles.css`, `data.js`：アプリ本体
+- `firebase-config.js`, `FIRESTORE_RULES.txt`：既存の接続設定
+- `learning_data_585.json`, `questions_585.csv`：全問題データ
+- `new_prediction_questions_100_v26.csv`：今回の新問100問
+- `new_terms_v26.csv`：今回の追加カード35件
+- `new_source_60_topic_index.csv`：いただいた60問の論点分類（本文は非転載）
+- `ANALYSIS_v2_6.md`：今回の分析・差分・品質対策
 
-## 位置づけと注意点
-
-このアプリは公式問題・公式eラーニングの転載物ではなく、学習用に新しく作成した非公式教材です。アップロードいただいた問題例から出題傾向を読み取り、事例を理解して回答する力を訓練するよう設計しています。既存の基礎問題の中には実際の試験より易しい選択肢が残ります。**エキスパート合格の目安には実戦問題の解答と購入済み公式eラーニングの結果を優先**してください。
-
-### 追加問題の事例確認元（抜粋）
-
-- https://www.sumitomocorp.com/ja/jp/news/topics/2026/group/20260421 （Any Wear, Anywhere）
-- https://hacobu.jp/movo-fleet/ （MOVO Fleet）
-- https://www.mellow.jp/ （Mellow / SHOP STOP）
-- https://mosh.jp/ （MOSH）
-- https://www.ibank.co.jp/faq/ （Wallet+）
-- https://www.creema.jp/page/legal/terms-of-use （Creema）
-
-※事業者の機能・運営主体・料金は変更され得ます。事例問題の事実関係は公式情報で確認してください。
+## 主な外部参照先（例）
+- [清水建設 DX-Core](https://www.shimz.co.jp/solution/tech373/index.html)
+- [ユニファ ルクミー](https://unifa-e.com/service/)
+- [EDEYANS Jtas](https://jtas-service.com/saas/)
+- [eBrevia 契約分析](https://www.ebrevia.com/jp/contract-analyzer)
+- [AGRIST ロボット](https://agrist.com/products/robot)
+- [THEO](https://www.money-design.com/)
+- [STORES](https://faq.stores.jp/hc/ja/articles/52834710423449-)
+- [NEC 顔認証決済](https://jpn.nec.com/fintech/face_settlement/index.html)
+- [ADDress](https://address.love/join?from=lp_socialize)
+- [イルヨ](https://www.akachan.jp/company/news_release/article/240131_2/)
