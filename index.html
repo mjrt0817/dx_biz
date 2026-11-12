@@ -3,28 +3,51 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DXビジネス検定 700点突破アプリ Web版 v2.2</title>
+  <title>DXビジネス検定 | 学習管理 v2.4</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="app-header">
-    <div>
-      <p class="eyebrow">DX Business Certification Trainer</p>
-      <h1>DXビジネス検定 700点突破アプリ Web版 v2.2</h1>
-      <p class="subtitle">エキスパート合格に向けて、200問演習・用語80語・苦手復習・模擬試験をブラウザだけで実行できます。v2.2ではGoogleアカウント同期の診断表示を強化しました。選択肢ランダム表示と改善済み問題データは維持しています。</p>
-    </div>
-    <div class="header-actions">
-      <button id="loginBtn" class="primary">Googleでログイン</button>
-      <button id="logoutBtn" class="ghost" disabled>ログアウト</button>
-      <button id="resetProgressBtn" class="ghost danger">学習履歴リセット</button>
-      <button id="importProgressBtn" class="ghost">履歴を読み込み</button>
-      <button id="exportProgressBtn" class="ghost">履歴を書き出し</button>
-      <input id="importProgressInput" type="file" accept="application/json,.json" class="hidden" />
-    </div>
-  </header>
-
+  <div class="app-shell">
+    <aside class="app-sidebar" aria-label="メインナビゲーション">
+      <div class="sidebar-brand">
+        <div class="brand-icon">DX</div>
+        <div><div class="brand-title">DX BUSINESS</div><div class="brand-subtitle">Learning Workspace</div></div>
+      </div>
+      <div class="sidebar-section-caption">学習メニュー</div>
+      <nav class="sidebar-nav">
+        <button data-action="go-home" class="nav-item active"><span class="nav-indicator"></span>ダッシュボード</button>
+        <button data-action="start-exam-style" class="nav-item"><span class="nav-indicator"></span>実戦形式の演習</button>
+        <button data-action="open-categories" class="nav-item"><span class="nav-indicator"></span>分野別演習</button>
+        <button data-action="open-mocks" class="nav-item"><span class="nav-indicator"></span>模擬試験</button>
+        <button data-action="open-terms" class="nav-item"><span class="nav-indicator"></span>用語・事例カード</button>
+        <button data-action="open-history" class="nav-item"><span class="nav-indicator"></span>学習履歴</button>
+      </nav>
+      <div class="sidebar-footer"><span class="dot"></span> Google同期対応<br><span class="sidebar-footnote">オリジナル問題集 v2.4</span></div>
+    </aside>
+    <div class="workspace">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">LEARNING DASHBOARD / EXPERT PRACTICE</p>
+          <h1>DXビジネス検定 学習管理</h1>
+          <p class="subtitle">事例を読み、近い選択肢を見分ける。基礎演習と実戦形式を切り替えて学習します。</p>
+        </div>
+        <div class="header-actions">
+          <button id="loginBtn" class="primary">Googleでログイン</button>
+          <button id="logoutBtn" class="ghost" disabled>ログアウト</button>
+          <details class="utility-menu">
+            <summary>データ管理</summary>
+            <div class="utility-panel">
+              <button id="importProgressBtn" class="ghost">履歴を読み込み</button>
+              <button id="exportProgressBtn" class="ghost">履歴を書き出し</button>
+              <button id="resetProgressBtn" class="ghost danger">学習履歴リセット</button>
+            </div>
+          </details>
+          <input id="importProgressInput" type="file" accept="application/json,.json" class="hidden" />
+        </div>
+      </header>
   <main>
     <section id="homeScreen" class="screen active">
+      <div class="section-heading"><span>学習状況</span><small>すべての演習を集計</small></div>
       <div class="grid stats-grid">
         <article class="stat-card">
           <span>収録問題</span>
@@ -39,15 +62,34 @@
         <article class="stat-card">
           <span>累計正答率</span>
           <strong id="overallAccuracy">0%</strong>
-          <small>迷った問題は復習対象</small>
+          <small>全問題の累計・参考値</small>
         </article>
         <article class="stat-card">
-          <span>本番換算目安</span>
+          <span>到達状況（参考）</span>
           <strong id="scoreLabel">未判定</strong>
           <small id="scoreHelp">まずは10問解きましょう</small>
         </article>
       </div>
 
+      <div class="section-heading"><span>今日の学習</span><small>実戦問題を優先</small></div>
+      <section class="panel hero-panel">
+        <div class="hero-copy">
+          <div class="micro-label">RECOMMENDED</div>
+          <h2>実戦形式で学習する</h2>
+          <p id="todayRecommendation">アップロードした問題例の傾向に沿って、企業事例や施策判断を反復します。</p>
+          <small class="muted">新規実戦問題は旧問題と区別して出題できます。公式の過去問ではありません。</small>
+        </div>
+        <div class="quick-actions">
+          <button data-action="start-exam-style" class="primary">実戦問題 10問</button>
+          <button data-action="start-exam-style-20" class="secondary">実戦問題 20問</button>
+          <button data-action="start-daily" class="secondary">今日の10問</button>
+          <button data-action="start-case" class="secondary">サービス事例10問</button>
+          <button data-action="start-weak" class="secondary">苦手問題を復習</button>
+          <button data-action="open-mocks" class="secondary">模擬試験</button>
+        </div>
+      </section>
+
+      <div class="section-heading"><span>クラウド同期</span><small>Google アカウント</small></div>
       <section id="authPanel" class="panel auth-panel">
         <div>
           <div class="panel-title-row">
@@ -66,28 +108,15 @@
         </div>
       </section>
 
-      <section class="panel hero-panel">
-        <div>
-          <h2>今日のおすすめ</h2>
-          <p id="todayRecommendation">まずは「今日の10問」から始めましょう。解答後に解説と試験ポイントを確認できます。</p>
-        </div>
-        <div class="quick-actions">
-          <button data-action="start-daily" class="primary">今日の10問</button>
-          <button data-action="start-weak" class="secondary">苦手問題を復習</button>
-          <button data-action="open-categories" class="secondary">分野別に学ぶ</button>
-          <button data-action="open-mocks" class="secondary">模擬試験</button>
-          <button data-action="open-history" class="secondary">履歴を詳しく見る</button>
-        </div>
-      </section>
-
-      <section class="panel data-panel">
+      <details class="panel data-panel"><summary>履歴の引き継ぎ方法を確認する</summary>
         <div class="panel-title-row">
           <h2>学習履歴の引き継ぎ</h2>
-          <span class="pill muted-pill">v2.2</span>
+          <span class="pill muted-pill">v2.4</span>
         </div>
-        <p class="muted">Googleログイン後は、学習履歴がFirestoreに保存され、別PC・スマホでも同じGoogleアカウントで読み込めます。JSONの書き出し／読み込みもバックアップ用として残しています。</p>
-      </section>
+        <p class="muted">Googleログイン後は、学習履歴がFirestoreに保存され、別PC・スマホでも同じGoogleアカウントで読み込めます。v2.4では実戦形式のオリジナル問題を追加しています。JSONの書き出し／読み込みもバックアップ用として残しています。</p>
+      </details>
 
+      <div class="section-heading"><span>学習進捗</span><small>分野別 / 最近の演習</small></div>
       <section class="two-column">
         <article class="panel">
           <div class="panel-title-row">
@@ -126,10 +155,11 @@
         <button data-action="go-home" class="ghost">← ホームへ</button>
         <h2>模擬試験</h2>
       </div>
+      <p class="support-note">模試は旧問題と新問題の混在です。実戦問題だけを解きたい場合はダッシュボードの「実戦問題」を選んでください。</p>
       <div class="mock-grid">
         <article class="panel mock-card">
           <h3>ミニ模試</h3>
-          <p>12問・8分。スキマ時間で速度感を確認します。</p>
+          <p>12問・8分。知識と処理速度を確認します。</p>
           <button data-mock="mini" class="primary">開始</button>
         </article>
         <article class="panel mock-card">
@@ -226,9 +256,11 @@
   </main>
 
   <footer>
-    <p>このアプリの問題は学習用のオリジナル問題です。公式問題そのものではありません。</p>
+    <p>このアプリは非公式の学習補助ツールです。掲載問題はオリジナルで、公式の試験問題・スコア換算ではありません。</p>
   </footer>
 
+    </div><!-- /.workspace -->
+  </div><!-- /.app-shell -->
   <script src="firebase-config.js"></script>
   <script src="data.js"></script>
   <script type="module" src="app.js"></script>

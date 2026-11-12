@@ -1,161 +1,57 @@
-# DXビジネス検定 700点突破アプリ Web版 v2.2
+# DXビジネス検定 学習管理アプリ Web v2.4
 
-v1.3を基準に、Googleアカウント同期と履歴閲覧を追加したWeb版です。v2.2では同期エラーの診断表示と接続テストを追加しています。Firebase プロジェクト `dx-biz` の設定値は反映済みです。
+**問題403問、用語・企業サービスカード140件。**
 
-## 主な機能
+## 学習内容
 
-- 200問演習
-- 用語カード80語
-- 今日の10問
-- 分野別演習
-- 苦手問題復習
-- ミニ模試 12問・8分
-- ハーフ模試 48問・30分
-- 本番模試 96問・60分
-- 選択肢ランダム表示
-- 正解位置の偏り解消済み
-- 学習履歴のJSON書き出し／読み込み
-- Googleアカウントログイン
-- Firestoreによるクラウド同期
-- 詳細な学習履歴画面
+- 実戦形式10問／20問：アップロードいただいた問題例の傾向に沿った **オリジナル51問**から出題。
+- 今日の10問、サービス事例10問、分野別10／20問、苦手問題の復習。
+- 12問／48問／96問の模試（時間制限あり、旧問題と実戦問題の混在）。
+- 解答後の解説と選択肢の説明、毎回の正答位置シャッフル。
+- 用語・企業事例カード、学習履歴閲覧、ローカルバックアップとGoogle同期。
 
-## v2.1で反映済みのFirebase設定
+## 設置方法
 
-```js
-window.DX_BIZ_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB_JNkqvZvGV8IQdztEB8uB4KpjkAlxFMI",
-  authDomain: "dx-biz.firebaseapp.com",
-  projectId: "dx-biz",
-  storageBucket: "dx-biz.firebasestorage.app",
-  messagingSenderId: "198728192395",
-  appId: "1:198728192395:web:d79d9d2f886c3010dd5f8e"
-};
-```
+1. フォルダの内容を**まとめて**Webサーバーの公開ディレクトリへ配置します（Firebase Hosting、Vercel、Xserverなどの静的ホスティングで可）。
+2. HTTPSで公開してください。Googleログインは `file://` では動作しません。
+3. `firebase-config.js` は既に提供済みの `dx-biz` プロジェクトのWebアプリ設定が入っています。Firebase Consoleで Google 認証を有効にしてください。
+4. Firebase Authentication → Settings → Authorized domains に、公開先ドメインを登録してください。
+5. Firestore Databaseのルールに `FIRESTORE_RULES.txt` を参考にした本人のみアクセス可能なルールを設定してください。
+6. Googleでログインし、画面の「接続テスト」→「今すぐ同期」を実行します。
 
-## Google同期の仕組み
+`firebase.json` はFirebase Hosting用です。設定済みのサイトがある場合は、既存のディレクトリ構成を維持したまま差し替えてください。
 
-ログインしたGoogleアカウントごとに、以下の場所へ学習履歴を保存します。
+## v2.3からの移行
 
-```text
-users/{uid}/apps/dxBizTrainer
-```
+- **同じURLで上書きデプロイ**する場合はLocalStorageに記録済みの学習履歴を通常は維持できます。
+- 同じGoogleアカウントでログインすればFirestore上の履歴にアクセスできます。
+- 念のため更新前に、メニューの「データ管理」→「履歴を書き出し」からJSONをバックアップしてください。
+- URLやブラウザを変更する際は、v2.4へJSONをインポート→Googleでログイン→「今すぐ同期」で引き継げます。
+- 既存の `Q001`〜`Q352` はIDを変更していません。新しい問題は `Q353`〜`Q403` です。
+- データが消失しないよう、旧環境と新環境の両方で頻繁に同期する運用は避けてください。
 
-保存される内容は、問題別正答履歴、演習・模試履歴、用語カードの状態、最終学習日などです。
+## ファイル
 
-## 初期設定
+- `index.html` / `styles.css` / `app.js`：画面・UI・学習ロジック
+- `data.js`：ブラウザで利用するデータ（403問+140カード）
+- `learning_data_403.json`：追加後の全データ
+- `exam_style_questions_added.csv`：実戦51問の編集用CSV
+- `questions_352.csv`, `service_case_questions_152.csv`, `terms_140.csv`：旧版の元データ
+- `firebase-config.js`：Google認証設定
+- `FIRESTORE_RULES.txt`：本人のみ許可するFirestoreルール例
+- `CHANGELOG_v2_4.md`：変更内容
 
-### 1. Firebaseプロジェクトを作成
+## 位置づけと注意点
 
-Firebase Consoleで新規プロジェクトを作成します。
+このアプリは公式問題・公式eラーニングの転載物ではなく、学習用に新しく作成した非公式教材です。アップロードいただいた問題例から出題傾向を読み取り、事例を理解して回答する力を訓練するよう設計しています。既存の基礎問題の中には実際の試験より易しい選択肢が残ります。**エキスパート合格の目安には実戦問題の解答と購入済み公式eラーニングの結果を優先**してください。
 
-### 2. Webアプリを追加
+### 追加問題の事例確認元（抜粋）
 
-プロジェクト設定からWebアプリを追加し、表示される `firebaseConfig` をコピーします。
+- https://www.sumitomocorp.com/ja/jp/news/topics/2026/group/20260421 （Any Wear, Anywhere）
+- https://hacobu.jp/movo-fleet/ （MOVO Fleet）
+- https://www.mellow.jp/ （Mellow / SHOP STOP）
+- https://mosh.jp/ （MOSH）
+- https://www.ibank.co.jp/faq/ （Wallet+）
+- https://www.creema.jp/page/legal/terms-of-use （Creema）
 
-### 3. firebase-config.js の確認
-
-v2.1では、`firebase-config.js` に以下の Firebase プロジェクト設定を反映済みです。
-
-```text
-projectId: dx-biz
-authDomain: dx-biz.firebaseapp.com
-```
-
-そのため、通常はこのファイルの差し替えは不要です。
-
-### 4. Googleログインを有効化
-
-Firebase Consoleで以下を設定します。
-
-```text
-Authentication > Sign-in method > Google > 有効化
-```
-
-### 5. Firestoreを作成
-
-Firestore Databaseを作成します。
-
-### 6. Firestoreルールを設定
-
-`FIRESTORE_RULES.txt` の内容をFirestoreルールに設定してください。
-
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/apps/{appId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-### 7. デプロイ
-
-Vercel、GitHub Pages、Firebase Hostingなどに配置できます。
-
-Googleログインを使う場合は、`file://` で直接開くのではなく、`https://` のWebサイトとして公開してください。ローカル検証は `localhost` が無難です。
-
-
-## 同期エラーが出る場合
-
-Googleログインできているのに同期エラーになる場合は、Firebase AuthenticationではなくFirestore側の設定が原因であることが多いです。
-
-アプリの「接続テスト」ボタンを押すと、Firestoreへの書き込み・読み込みを確認し、エラーコードと確認ポイントを表示します。
-
-代表的なエラーは以下です。
-
-| エラーコード | 主な原因 | 対応 |
-|---|---|---|
-| permission-denied | Firestore Rulesが未設定、またはルールが違う | `FIRESTORE_RULES.txt` を貼り付けて公開 |
-| failed-precondition | Firestore Database未作成、またはモード不一致 | Firestore Databaseを作成 |
-| not-found | Firestore Databaseがない | Firestore Database作成状況を確認 |
-| unavailable | ネットワーク、広告ブロッカー、社内プロキシ等 | 別回線・別ブラウザで確認 |
-| unauthenticated | ログイン状態が切れている | ログアウト→再ログイン |
-
-同期で使う保存先は以下です。
-
-```text
-users/{ログインユーザーのuid}/apps/dxBizTrainer
-```
-
-Firestore Rulesは以下の形式にしてください。
-
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/apps/{appId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-## 既存履歴の引き継ぎ
-
-v1.3以前の履歴を引き継ぐ場合は、次の手順です。
-
-1. 旧アプリで「履歴を書き出し」
-2. v2.0を開く
-3. 「履歴を読み込み」
-4. Googleログイン
-5. 「今すぐ同期」
-
-これでクラウド側にも保存されます。
-
-## 同期ボタンの意味
-
-| ボタン | 用途 |
-|---|---|
-| 今すぐ同期 | 端末履歴とクラウド履歴を統合します |
-| クラウドから読込 | クラウド履歴でこの端末を上書きします |
-| この端末を保存 | この端末の履歴をクラウドへ保存します |
-
-通常は「今すぐ同期」を使えば十分です。
-
-## 注意
-
-- このアプリの問題は学習用のオリジナル問題です。公式問題そのものではありません。
-- FirebaseのAPIキーは一般的にクライアント側に含まれる前提の識別子ですが、Firestoreルールでユーザー本人以外が読めないように制御してください。
-- Googleログインの許可ドメインに、公開先ドメインを追加してください。Vercelで公開する場合は `xxxxx.vercel.app` を追加します。
+※事業者の機能・運営主体・料金は変更され得ます。事例問題の事実関係は公式情報で確認してください。

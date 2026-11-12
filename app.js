@@ -4,7 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 (() => {
   const DATA = window.DX_BIZ_DATA;
-  const APP_VERSION = '2.2';
+  const APP_VERSION = '2.4';
   const STORAGE_KEY = 'dxBizTrainerProgress.v1';
   const SESSION_KEY = 'dxBizTrainerCurrentSession.v1';
 
@@ -65,8 +65,12 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
         if (action === 'open-categories') showScreen('categoryScreen');
         if (action === 'open-mocks') showScreen('mockScreen');
         if (action === 'open-terms') showScreen('termScreen');
+        if (action === 'open-case-terms') { showScreen('termScreen'); setTimeout(() => { els.termCategoryFilter.value = 'case'; renderTerms(); }, 0); }
         if (action === 'open-history') showScreen('historyScreen');
         if (action === 'start-daily') startQuiz('今日の10問', selectDailyQuestions(), 0);
+        if (action === 'start-case') startQuiz('サービス事例10問', selectCaseStudyQuestions(10), 0);
+        if (action === 'start-exam-style') startQuiz('実戦形式 10問', selectExamStyleQuestions(10), 0);
+        if (action === 'start-exam-style-20') startQuiz('実戦形式 20問', selectExamStyleQuestions(20), 0);
         if (action === 'start-weak') startWeakQuiz();
       }
 
@@ -187,7 +191,19 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     if (id === 'categoryScreen') renderCategoryScreen();
     if (id === 'termScreen') renderTermScreen();
     if (id === 'historyScreen') renderHistoryScreen();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
+      const action = btn.dataset.action;
+      const selected = (id === 'homeScreen' && action === 'go-home') ||
+        (id === 'categoryScreen' && action === 'open-categories') ||
+        (id === 'mockScreen' && action === 'open-mocks') ||
+        (id === 'termScreen' && action === 'open-terms') ||
+        (id === 'historyScreen' && action === 'open-history') ||
+        (id === 'quizScreen' && action === 'start-exam-style');
+      btn.classList.toggle('active', selected);
+      if (selected) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
+    });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   function getActiveQuestions() {
@@ -248,10 +264,11 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
   function getScoreLabel(accuracy, totalAttempts) {
     if (!totalAttempts) return { label: '未判定', help: 'まずは10問解きましょう' };
-    if (accuracy >= 80) return { label: '800点圏', help: 'プロフェッショナル水準の目安' };
-    if (accuracy >= 70) return { label: '700点圏', help: 'エキスパート水準の目安' };
-    if (accuracy >= 60) return { label: '600点圏', help: '基礎は見えている状態' };
-    return { label: '基礎固め', help: '用語と解説の復習を優先' };
+    if (totalAttempts < 20) return { label: '判定保留', help: '20問以上解くと参考傾向を表示します' };
+    if (accuracy >= 80) return { label: '高め', help: '演習内の参考傾向。公式スコアとは異なります' };
+    if (accuracy >= 70) return { label: '中位', help: '実戦形式と公式教材で理解度を確認しましょう' };
+    if (accuracy >= 60) return { label: '復習推奨', help: '誤答の理由まで説明できるか確認しましょう' };
+    return { label: '基礎を優先', help: '用語・事例カードと解説で復習しましょう' };
   }
 
   function renderCategorySummary() {
@@ -338,7 +355,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   }
 
   function renderTermScreen() {
-    els.termCategoryFilter.innerHTML = '<option value="">すべてのカテゴリ</option>' + DATA.categories.map(c => `<option value="${c.category_id}">${c.category_id} ${escapeHtml(c.category_name)}</option>`).join('');
+    els.termCategoryFilter.innerHTML = '<option value="">すべてのカテゴリ</option><option value="case">サービス事例カテゴリ</option>' + DATA.categories.map(c => `<option value="${c.category_id}">${c.category_id} ${escapeHtml(c.category_name)}</option>`).join('');
     renderTerms();
   }
 
@@ -347,7 +364,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     const categoryId = els.termCategoryFilter.value;
     const terms = (DATA.terms || []).filter(t => {
       const text = `${t.term} ${t.reading} ${t.definition} ${t.example} ${(t.relatedTerms || []).join(' ')}`.toLowerCase();
-      return (!keyword || text.includes(keyword)) && (!categoryId || t.categoryId === categoryId);
+      const categoryMatch = !categoryId || (categoryId === 'case' ? (t.isCaseStudy || ['09','10','11','12'].includes(t.categoryId)) : t.categoryId === categoryId);
+      return (!keyword || text.includes(keyword)) && categoryMatch;
     });
     els.termList.innerHTML = terms.map(t => `
       <article class="term-card">
@@ -401,6 +419,17 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   function selectMockQuestions(count) {
     const questions = getActiveQuestions();
     return shuffle(questions).slice(0, Math.min(count, questions.length));
+  }
+
+  function selectExamStyleQuestions(count = 10) {
+    const questions = getActiveQuestions().filter(q => q.practiceSet === 'exam-style');
+    return takeWithPriority(questions, count);
+  }
+
+  function selectCaseStudyQuestions(count = 10) {
+    const caseCategoryIds = ['09', '10', '11', '12'];
+    const questions = getActiveQuestions().filter(q => caseCategoryIds.includes(q.categoryId) || (q.type || '').includes('サービス'));
+    return takeWithPriority(questions, count);
   }
 
   function startWeakQuiz() {
@@ -510,7 +539,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     els.timerDisplay.classList.toggle('hidden', !session.durationSeconds);
     els.questionCategory.textContent = question.categoryName;
     els.questionDifficulty.textContent = question.difficulty;
-    els.questionType.textContent = question.type;
+    els.questionType.textContent = question.practiceSet === 'exam-style' ? '実戦形式 / オリジナル' : question.type;
     els.questionText.textContent = question.question;
     els.uncertainCheck.checked = false;
     els.answerPanel.className = 'answer-panel hidden';
@@ -602,6 +631,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       <p><strong>正解：</strong>${correctDisplayIndex}. ${escapeHtml(q.answerText || q.choices[q.answer - 1])}</p>
       <p>${escapeHtml(q.explanation || '')}</p>
       ${q.examPoint ? `<p><strong>試験ポイント：</strong>${escapeHtml(q.examPoint)}</p>` : ''}
+      ${q.referenceUrl ? `<p><a href="${escapeHtml(q.referenceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link">参考：事例の公式情報を確認</a></p>` : ''}
       ${q.keywords && q.keywords.length ? `<p><strong>関連キーワード：</strong>${escapeHtml(q.keywords.join('、'))}</p>` : ''}
       ${wrongDetails ? `<details><summary>選択肢ごとの確認</summary><ul>${wrongDetails}</ul></details>` : ''}
     `;
@@ -674,7 +704,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
         <div class="result-stat"><span>出題数</span><strong>${result.total}</strong></div>
         <div class="result-stat"><span>未回答</span><strong>${result.total - result.answered}</strong></div>
       </div>
-      <p>${escapeHtml(label.help)}</p>
+      <p>${escapeHtml(label.help)}／この結果は学習問題の正答率であり、試験の点数を予測するものではありません。</p>
       <h3>カテゴリ別結果</h3>
       <div class="category-list">${categoryRows || '<p class="muted">集計対象がありません。</p>'}</div>
       <h3 style="margin-top:1rem;">復習対象</h3>
@@ -724,7 +754,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dx-biz-progress-v2_0-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `dx-biz-progress-v2_4-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
