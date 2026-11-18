@@ -111,3 +111,28 @@ input:not([type="checkbox"]),select{border:1px solid #cbd6df;background:#fff;col
   .sidebar-nav{overflow-x:auto;overscroll-behavior-x:contain}
   .app-header,main{min-width:0;max-width:100%}
 }
+
+/* v2.7: user-provided source-image practice. Source options stay in original order. */
+.source-practice-panel{max-width:1120px}
+.source-intro{line-height:1.85;background:#f4f7fa;border-left:3px solid #6c91af;padding:1rem 1.15rem;border-radius:4px;margin:0 0 1.25rem;color:#314456}
+.source-toolbar{display:flex;gap:.75rem;align-items:end;flex-wrap:wrap;margin-bottom:.9rem}
+.source-toolbar label{font-size:.8rem;color:#65778b;font-weight:600;display:flex;flex-direction:column;gap:.35rem;min-width:215px}
+.source-toolbar select{border:1px solid #cbd6e2;border-radius:5px;padding:.7rem .75rem;background:#fff;color:#23384c;font-size:.95rem;min-height:42px}
+.source-toolbar button{min-height:42px}
+.source-info-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+.source-muted{font-size:.88rem;color:#667789;line-height:1.7}
+.source-image-title{font-weight:700;color:#33485e;margin:.5rem 0}
+.source-question-image{display:block;width:auto;max-width:100%;height:auto;max-height:none;border:1px solid #dde4ea;background:white;margin:0 auto 1rem;box-shadow:0 1px 4px #152d4512}
+.source-answer-caption{margin:1rem 0 .75rem;color:#52667b;font-size:.88rem}
+.source-answer-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem}
+.source-answer-buttons .choice-btn{display:flex;justify-content:center;align-items:center;font-size:1.15rem;font-weight:700;padding:.75rem;min-width:0}
+.source-answer-buttons .choice-btn.source-selected{background:#eaf2f9;border-color:#6d95b8;color:#244f74}
+.source-answer-buttons .choice-btn.source-selected.correct{background:#e7f6ed;border-color:#65a482;color:#23583b}
+.source-answer-buttons .choice-btn.source-selected.wrong{background:#fdf0f0;border-color:#c88f91;color:#90444a}
+.source-answer-notice{padding:.8rem 1rem;border:1px solid #d9e3eb;background:#f7f9fb;color:#425b71;border-radius:5px;font-size:.9rem;margin:1rem 0}
+.source-navigation{display:flex;gap:1rem;justify-content:space-between;margin:1.25rem 0}
+.source-key-details{border-top:1px solid #dfe6ec;margin-top:1.1rem;padding-top:1rem;color:#40576d}
+.source-key-details>summary{font-weight:600;cursor:pointer}
+.source-key-buttons{display:flex;gap:.55rem;flex-wrap:wrap;margin:.8rem 0}
+.source-key-buttons button.is-source-key{background:#e7f1fb;border-color:#7c9eb9;color:#274d69}
+@media(max-width:650px){.source-toolbar label{width:100%}.source-toolbar button{flex:1}.source-answer-buttons{gap:.35rem}.source-answer-buttons .choice-btn{padding:.7rem .3rem}.source-navigation{gap:.5rem}.source-navigation button{flex:1}.source-intro{padding:.8rem}}

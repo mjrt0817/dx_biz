@@ -1,28 +1,29 @@
 {
-  "existing_questions": 485,
-  "added_questions": 100,
-  "total_questions": 585,
-  "existing_cards": 161,
-  "added_cards": 35,
-  "total_cards": 196,
-  "answer_distribution": {
-    "2": 25,
-    "1": 25,
-    "4": 25,
-    "3": 25
+  "base_version": "2.6",
+  "version": "2.7",
+  "previous_graded_questions": 585,
+  "added_graded_questions": 47,
+  "total_graded_questions": 632,
+  "total_terms": 196,
+  "source_images": {
+    "previous_unique": 153,
+    "new_zip_items": 120,
+    "new_unique": 60,
+    "new_zip_duplicates": 60,
+    "total_unique": 213,
+    "verified_answer_key_count": 0,
+    "source_questions_graded_by_default": 0,
+    "source_group_counts": {
+      "2026-11-12-am": 93,
+      "2026-11-12-pm": 60,
+      "2026-11-18": 60
+    }
   },
-  "new_by_category": {
-    "01": 9,
-    "02": 7,
-    "03": 9,
-    "04": 13,
-    "05": 5,
-    "06": 5,
-    "07": 15,
-    "08": 10,
-    "10": 9,
-    "11": 17,
-    "12": 1
-  },
-  "category_alignment_adjustments": 15
+  "new_answer_distribution": { "1": 13, "2": 13, "3": 11, "4": 10 },
+  "new_category_counts": { "01": 3, "02": 11, "03": 7, "04": 4, "05": 3, "06": 4, "07": 4, "08": 5, "09": 2, "10": 1, "11": 2, "12": 1 },
+  "node_syntax_check": "passed",
+  "integration_checks": 32,
+  "integration_result": "passed",
+  "browser_screenshot_check": "not_run_chromium_launch_environment_permission",
+  "production_firebase_check": "not_run"
 }

@@ -4,7 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 (() => {
   const DATA = window.DX_BIZ_DATA;
-  const APP_VERSION = '2.6';
+  const APP_VERSION = '2.7';
   const STORAGE_KEY = 'dxBizTrainerProgress.v1';
   const SESSION_KEY = 'dxBizTrainerCurrentSession.v1';
 
@@ -28,6 +28,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   };
   let cloudSaveTimer = null;
   let suppressCloudSave = false;
+  let sourceCursor = 0;
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -51,7 +52,11 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       'questionCategory', 'questionDifficulty', 'questionType', 'questionText', 'choices', 'uncertainCheck',
       'answerPanel', 'nextQuestionBtn', 'exitQuizBtn', 'resultPanel', 'resetProgressBtn', 'importProgressBtn', 'importProgressInput', 'exportProgressBtn',
       'authPanel', 'authStatus', 'authUserName', 'authUserEmail', 'loginBtn', 'logoutBtn', 'syncNowBtn', 'pullCloudBtn', 'pushCloudBtn', 'syncTestBtn', 'syncErrorDetail',
-      'historyScreen', 'historyDetailList', 'historyCategoryList', 'historyWeakList', 'openHistoryBtn', 'syncStatusBadge'
+      'historyScreen', 'historyDetailList', 'historyCategoryList', 'historyWeakList', 'openHistoryBtn', 'syncStatusBadge',
+      'sourceScreen', 'sourceGroupSelect', 'sourceProgressLabel', 'sourceReviewProgress', 'sourceImageTitle',
+      'sourceQuestionImage', 'sourceAnswerButtons', 'sourceUncertainCheck', 'sourceAnswerNotice',
+      'sourcePrevBtn', 'sourceNextBtn', 'sourceJumpUnreviewed', 'sourceJumpRandom', 'sourceKeyButtons',
+      'sourceKeyStatus', 'sourceStatsHome', 'historySourceList'
     ];
     ids.forEach(id => { els[id] = document.getElementById(id); });
   }
@@ -67,6 +72,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
         if (action === 'open-terms') showScreen('termScreen');
         if (action === 'open-case-terms') { showScreen('termScreen'); setTimeout(() => { els.termCategoryFilter.value = 'case'; renderTerms(); }, 0); }
         if (action === 'open-history') showScreen('historyScreen');
+        if (action === 'open-source') showScreen('sourceScreen');
+        if (action === 'start-v27') startQuiz('対策強化問題 10問', selectV27Questions(10), 0);
+        if (action === 'start-v27-20') startQuiz('対策強化問題 20問', selectV27Questions(20), 0);
         if (action === 'start-daily') startQuiz('今日の10問', selectDailyQuestions(), 0);
         if (action === 'start-case') startQuiz('サービス事例10問', selectCaseStudyQuestions(10), 0);
         if (action === 'start-v26') startQuiz('今回の予想問題 10問', selectV26Questions(10), 0);
@@ -84,6 +92,16 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
         const categoryId = categoryBtn.dataset.categoryId;
         const count = Number(categoryBtn.dataset.count || 10);
         startQuiz(`${getCategory(categoryId)?.category_name || '分野別'} ${count}問`, selectCategoryQuestions(categoryId, count), 0);
+      }
+
+      const sourceHistoryBtn = e.target.closest('[data-source-review-id]');
+      if (sourceHistoryBtn) {
+        const q = (DATA.sourceQuestions || []).find(item => item.id === sourceHistoryBtn.dataset.sourceReviewId);
+        if (q) {
+          els.sourceGroupSelect.value = q.sourceGroup;
+          sourceCursor = getSourceQuestions().findIndex(item => item.id === q.id);
+          showScreen('sourceScreen');
+        }
       }
 
       const mockBtn = e.target.closest('[data-mock]');
@@ -114,10 +132,23 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     els.pullCloudBtn?.addEventListener('click', pullCloudProgress);
     els.pushCloudBtn?.addEventListener('click', pushCloudProgress);
     els.syncTestBtn?.addEventListener('click', testFirestoreConnection);
+    els.sourceGroupSelect?.addEventListener('change', () => { sourceCursor = 0; renderSourceQuestion(); });
+    els.sourcePrevBtn?.addEventListener('click', () => { sourceCursor = Math.max(0, sourceCursor - 1); renderSourceQuestion(); });
+    els.sourceNextBtn?.addEventListener('click', () => { sourceCursor += 1; renderSourceQuestion(); });
+    els.sourceJumpRandom?.addEventListener('click', jumpRandomSourceQuestion);
+    els.sourceJumpUnreviewed?.addEventListener('click', jumpUnreviewedSourceQuestion);
+    els.sourceAnswerButtons?.addEventListener('click', e => {
+      const choice = Number(e.target.closest('[data-source-choice]')?.dataset.sourceChoice);
+      if (choice >= 1 && choice <= 4) recordSourceAnswer(choice);
+    });
+    els.sourceKeyButtons?.addEventListener('click', e => {
+      const key = Number(e.target.closest('[data-source-key]')?.dataset.sourceKey);
+      if (Number.isInteger(key) && key >= 0 && key <= 4) registerSourceAnswerKey(key);
+    });
   }
 
   function createBlankProgress() {
-    return { questionStats: {}, sessions: [], terms: {}, lastStudyDate: null, updatedAt: null };
+    return { questionStats: {}, sessions: [], terms: {}, sourceReviewStats: {}, sourceAnswerKeys: {}, lastStudyDate: null, updatedAt: null };
   }
 
   function loadProgress() {
@@ -137,6 +168,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       questionStats: src.questionStats && typeof src.questionStats === 'object' ? src.questionStats : {},
       sessions: Array.isArray(src.sessions) ? src.sessions : [],
       terms: src.terms && typeof src.terms === 'object' ? src.terms : {},
+      sourceReviewStats: src.sourceReviewStats && typeof src.sourceReviewStats === 'object' ? src.sourceReviewStats : {},
+      sourceAnswerKeys: src.sourceAnswerKeys && typeof src.sourceAnswerKeys === 'object' ? src.sourceAnswerKeys : {},
       lastStudyDate: src.lastStudyDate || null,
       updatedAt: src.updatedAt || null,
     };
@@ -196,6 +229,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     if (id === 'categoryScreen') renderCategoryScreen();
     if (id === 'termScreen') renderTermScreen();
     if (id === 'historyScreen') renderHistoryScreen();
+    if (id === 'sourceScreen') renderSourceQuestion();
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
       const action = btn.dataset.action;
       const selected = (id === 'homeScreen' && action === 'go-home') ||
@@ -203,7 +237,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
         (id === 'mockScreen' && action === 'open-mocks') ||
         (id === 'termScreen' && action === 'open-terms') ||
         (id === 'historyScreen' && action === 'open-history') ||
-        (id === 'quizScreen' && action === 'start-exam-style');
+        (id === 'quizScreen' && action === 'start-exam-style') ||
+        (id === 'sourceScreen' && action === 'open-source');
       btn.classList.toggle('active', selected);
       if (selected) btn.setAttribute('aria-current', 'page');
       else btn.removeAttribute('aria-current');
@@ -244,6 +279,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     const accuracy = totalAttempts ? Math.round(totalCorrect / totalAttempts * 100) : 0;
 
     els.totalQuestions.textContent = questions.length;
+    const sourceTotal = (DATA.sourceQuestions || []).length;
+    const sourceAnswered = Object.values(state.progress.sourceReviewStats || {}).filter(x => x?.attempts > 0).length;
+    if (els.sourceStatsHome) els.sourceStatsHome.textContent = `原文画像：${sourceTotal}問中 ${sourceAnswered}問を学習済み（採点対象外）`;
     els.answeredCount.textContent = answeredIds.length;
     els.answeredRatio.textContent = `${Math.round(answeredIds.length / questions.length * 100)}% 学習済み`;
     els.overallAccuracy.textContent = `${accuracy}%`;
@@ -430,6 +468,10 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     return takeWithPriority(getActiveQuestions().filter(q => q.practiceBatch === '2026-11-12-pm'), count);
   }
 
+  function selectV27Questions(count = 10) {
+    return takeWithPriority(getActiveQuestions().filter(q => q.practiceBatch === '2026-11-18-plus'), count);
+  }
+
   function selectLatestQuestions(count = 10) {
     return takeWithPriority(getActiveQuestions().filter(q => q.practiceBatch === '2026-11-12'), count);
   }
@@ -443,6 +485,111 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     const caseCategoryIds = ['09', '10', '11', '12'];
     const questions = getActiveQuestions().filter(q => caseCategoryIds.includes(q.categoryId) || (q.type || '').includes('サービス'));
     return takeWithPriority(questions, count);
+  }
+
+  // Screenshot questions reproduce the supplied text and options as images.
+  // Because no answer sheet was supplied, they are a separate UNGRADED practice bank.
+  function getSourceQuestions() {
+    const group = els.sourceGroupSelect?.value || '2026-11-18';
+    const questions = DATA.sourceQuestions || [];
+    return group === 'all' ? questions : questions.filter(q => q.sourceGroup === group);
+  }
+
+  function getCurrentSourceQuestion() {
+    const questions = getSourceQuestions();
+    if (!questions.length) return null;
+    sourceCursor = Math.max(0, Math.min(sourceCursor, questions.length - 1));
+    return questions[sourceCursor];
+  }
+
+  function renderSourceQuestion() {
+    if (!els.sourceScreen) return;
+    const questions = getSourceQuestions();
+    const q = getCurrentSourceQuestion();
+    if (!q) return;
+    const record = state.progress.sourceReviewStats?.[q.id] || null;
+    const keyEntry = state.progress.sourceAnswerKeys?.[q.id];
+    const key = Number(keyEntry?.answer) || null;
+    const reviewed = questions.filter(x => (state.progress.sourceReviewStats?.[x.id]?.attempts || 0) > 0).length;
+    const totalReviewed = (DATA.sourceQuestions || []).filter(x => (state.progress.sourceReviewStats?.[x.id]?.attempts || 0) > 0).length;
+
+    els.sourceProgressLabel.textContent = `${sourceCursor + 1} / ${questions.length}`;
+    els.sourceReviewProgress.textContent = `このセット：${reviewed} / ${questions.length}問 学習済み ／ 全体：${totalReviewed} / ${(DATA.sourceQuestions || []).length}問`;
+    els.sourceImageTitle.textContent = `${q.groupLabel}　画像 ${q.groupSequence}（${q.id}）`;
+    els.sourceQuestionImage.src = q.image;
+    els.sourceQuestionImage.alt = `${q.groupLabel}の画像問題${q.groupSequence}。設問と選択肢1～4を原文のまま掲載しています。`;
+    els.sourcePrevBtn.disabled = sourceCursor === 0;
+    els.sourceNextBtn.disabled = sourceCursor === questions.length - 1;
+    els.sourceUncertainCheck.checked = Boolean(record?.lastUncertain);
+
+    els.sourceAnswerButtons.querySelectorAll('[data-source-choice]').forEach(btn => {
+      const selected = Number(btn.dataset.sourceChoice) === Number(record?.lastSelected);
+      btn.classList.toggle('source-selected', selected);
+      btn.classList.toggle('correct', selected && Boolean(key) && key === Number(record?.lastSelected));
+      btn.classList.toggle('wrong', selected && Boolean(key) && key !== Number(record?.lastSelected));
+      btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+    els.sourceKeyButtons.querySelectorAll('[data-source-key]').forEach(btn => {
+      btn.classList.toggle('is-source-key', Boolean(key) && Number(btn.dataset.sourceKey) === key);
+    });
+
+    const attempts = record?.attempts || 0;
+    if (!attempts) {
+      els.sourceAnswerNotice.textContent = key ? `登録済み正答：${key}。解答を選んで照合してください。` : 'この問題は未学習です。回答番号を選ぶと、未採点の学習記録として保存します。';
+    } else if (!key) {
+      els.sourceAnswerNotice.textContent = `前回の回答：${record.lastSelected}　／　回答 ${attempts}回。正答未登録のため採点はしていません。`;
+    } else {
+      const correct = Number(record.lastSelected) === key;
+      els.sourceAnswerNotice.textContent = `前回の回答：${record.lastSelected}　／　自己登録した正答：${key}　→　${correct ? '一致' : '不一致'}（回答 ${attempts}回）`;
+    }
+    els.sourceKeyStatus.textContent = key ? `この問題の自己登録した正答は「${key}」です。` : 'この問題の正答は未登録です。';
+  }
+
+  function recordSourceAnswer(choice) {
+    const q = getCurrentSourceQuestion();
+    if (!q) return;
+    const now = new Date().toISOString();
+    const prior = state.progress.sourceReviewStats[q.id] || {};
+    const uncertain = Boolean(els.sourceUncertainCheck.checked);
+    state.progress.sourceReviewStats[q.id] = {
+      attempts: (prior.attempts || 0) + 1,
+      lastSelected: choice,
+      lastUncertain: uncertain,
+      uncertainCount: (prior.uncertainCount || 0) + (uncertain ? 1 : 0),
+      lastReviewedAt: now,
+    };
+    state.progress.lastStudyDate = now.slice(0, 10);
+    saveProgress();
+    renderSourceQuestion();
+  }
+
+  function registerSourceAnswerKey(choice) {
+    const q = getCurrentSourceQuestion();
+    if (!q) return;
+    state.progress.sourceAnswerKeys[q.id] = { answer: choice || null, updatedAt: new Date().toISOString() };
+    saveProgress();
+    renderSourceQuestion();
+  }
+
+  function jumpRandomSourceQuestion() {
+    const items = getSourceQuestions();
+    if (!items.length) return;
+    sourceCursor = Math.floor(Math.random() * items.length);
+    renderSourceQuestion();
+  }
+
+  function jumpUnreviewedSourceQuestion() {
+    const items = getSourceQuestions();
+    if (!items.length) return;
+    for (let step = 1; step <= items.length; step++) {
+      const index = (sourceCursor + step) % items.length;
+      if (!state.progress.sourceReviewStats[items[index].id]?.attempts) {
+        sourceCursor = index;
+        renderSourceQuestion();
+        return;
+      }
+    }
+    alert('この問題セットは全問学習済みです。「ランダムに出題」から復習できます。');
   }
 
   function startWeakQuiz() {
@@ -752,6 +899,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     renderHome();
     renderCategoryScreen();
     renderHistoryScreen();
+    if (els.sourceScreen?.classList.contains('active')) renderSourceQuestion();
     if (firebaseState.user) scheduleCloudSave();
     alert('この端末の学習履歴をリセットしました。Google同期中の場合はクラウド側にも空の履歴を保存します。');
   }
@@ -927,6 +1075,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       renderCategoryScreen();
       renderTermScreen();
       renderHistoryScreen();
+      if (els.sourceScreen?.classList.contains('active')) renderSourceQuestion();
       renderAuthPanel();
     } catch (err) {
       handleSyncError(err, 'クラウド同期');
@@ -951,6 +1100,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       renderCategoryScreen();
       renderTermScreen();
       renderHistoryScreen();
+      if (els.sourceScreen?.classList.contains('active')) renderSourceQuestion();
       renderAuthPanel();
     } catch (err) {
       handleSyncError(err, 'クラウド履歴の読み込み');
@@ -1100,6 +1250,23 @@ Firestore Rulesは同梱の FIRESTORE_RULES.txt をそのまま貼り付けて�
       const acc = s.attempts ? Math.round((s.correct || 0) / s.attempts * 100) : 0;
       return `<div class="mistake-item"><strong>${q.id} ${escapeHtml(q.question)}</strong><br><span class="muted">${escapeHtml(q.categoryName)} ／ 正答率 ${acc}% ／ 回答 ${s.attempts}回 ／ 迷い ${s.uncertain || 0}回</span></div>`;
     }).join('') : '<p class="muted">現在、復習対象の問題はありません。</p>';
+
+    if (els.historySourceList) {
+      const sourceHistory = (DATA.sourceQuestions || [])
+        .filter(q => (state.progress.sourceReviewStats[q.id]?.attempts || 0) > 0)
+        .sort((a, b) => String(state.progress.sourceReviewStats[b.id]?.lastReviewedAt || '').localeCompare(String(state.progress.sourceReviewStats[a.id]?.lastReviewedAt || '')))
+        .slice(0, 20);
+      els.historySourceList.innerHTML = sourceHistory.length ? sourceHistory.map(q => {
+        const stat = state.progress.sourceReviewStats[q.id];
+        const correct = Number(state.progress.sourceAnswerKeys[q.id]?.answer) || null;
+        const result = !correct ? '未採点' : Number(stat.lastSelected) === correct ? '自己登録正答と一致' : '自己登録正答と不一致';
+        return `<div class="history-item detail-history-item">
+          <div><strong>${escapeHtml(q.groupLabel)} 画像${q.groupSequence}</strong><br><small class="muted">${stat.lastReviewedAt ? new Date(stat.lastReviewedAt).toLocaleString('ja-JP') : ''}</small></div>
+          <div>回答 ${stat.lastSelected} ／ ${escapeHtml(result)}</div>
+          <div><button class="text-btn" data-source-review-id="${q.id}">問題を開く</button></div>
+        </div>`;
+      }).join('') : '<p class="muted">原文画像の回答履歴はまだありません。</p>';
+    }
   }
 
   function mergeProgress(current, imported) {
@@ -1124,9 +1291,22 @@ Firestore Rulesは同梱の FIRESTORE_RULES.txt をそのまま貼り付けて�
       questionStats,
       sessions,
       terms: { ...(base.terms || {}), ...(incoming.terms || {}) },
+      sourceReviewStats: mergeTimestampedRecords(base.sourceReviewStats, incoming.sourceReviewStats, 'lastReviewedAt'),
+      sourceAnswerKeys: mergeTimestampedRecords(base.sourceAnswerKeys, incoming.sourceAnswerKeys, 'updatedAt'),
       lastStudyDate: [base.lastStudyDate, incoming.lastStudyDate].filter(Boolean).sort().pop() || null,
       updatedAt: [base.updatedAt, incoming.updatedAt].filter(Boolean).sort().pop() || null,
     };
+  }
+
+  function mergeTimestampedRecords(current = {}, incoming = {}, field) {
+    const merged = { ...current };
+    Object.entries(incoming || {}).forEach(([key, record]) => {
+      if (!record || typeof record !== 'object') return;
+      if (!merged[key] || String(record[field] || '') > String(merged[key][field] || '')) {
+        merged[key] = { ...record };
+      }
+    });
+    return merged;
   }
 
   function rebuildStatsFromSessions(sessions) {

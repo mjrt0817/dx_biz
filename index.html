@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DXビジネス検定 | 学習管理 v2.6</title>
+  <title>DXビジネス検定 | 学習管理 v2.7</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -17,6 +17,8 @@
       <nav class="sidebar-nav">
         <button data-action="go-home" class="nav-item active"><span class="nav-indicator"></span>ダッシュボード</button>
         <button data-action="start-exam-style" class="nav-item"><span class="nav-indicator"></span>実戦形式の演習</button>
+        <button data-action="open-source" class="nav-item"><span class="nav-indicator"></span>提供画像の原文演習</button>
+        <button data-action="start-v27" class="nav-item"><span class="nav-indicator"></span>対策強化問題 47問</button>
         <button data-action="start-v26" class="nav-item"><span class="nav-indicator"></span>今回の予想問題 100問</button>
         <button data-action="start-latest" class="nav-item"><span class="nav-indicator"></span>前回の予想問題 82問</button>
         <button data-action="open-categories" class="nav-item"><span class="nav-indicator"></span>分野別演習</button>
@@ -24,7 +26,7 @@
         <button data-action="open-terms" class="nav-item"><span class="nav-indicator"></span>用語・事例カード</button>
         <button data-action="open-history" class="nav-item"><span class="nav-indicator"></span>学習履歴</button>
       </nav>
-      <div class="sidebar-footer"><span class="dot"></span> Google同期対応<br><span class="sidebar-footnote">オリジナル問題集 v2.6</span></div>
+      <div class="sidebar-footer"><span class="dot"></span> Google同期対応<br><span class="sidebar-footnote">原文画像＋対策問題 v2.7</span></div>
     </aside>
     <div class="workspace">
       <header class="app-header">
@@ -54,7 +56,7 @@
         <article class="stat-card">
           <span>収録問題</span>
           <strong id="totalQuestions">100</strong>
-          <small>公式シラバス12分類対応</small>
+          <small>採点付きの独自問題・12分類対応</small>
         </article>
         <article class="stat-card">
           <span>学習済み</span>
@@ -79,9 +81,13 @@
           <div class="micro-label">RECOMMENDED</div>
           <h2>実戦形式で学習する</h2>
           <p id="todayRecommendation">アップロードした問題例の傾向に沿って、企業事例や施策判断を反復します。</p>
-          <small class="muted">追加の予想問題も独立したモードで出題します。公式の問題を転載したものではありません。</small>
+          <small class="muted">提供画像の原文演習（未採点）と、解説・採点付きオリジナル問題を分けて学習できます。</small>
+          <p id="sourceStatsHome" class="source-muted">原文画像 213枚を別途収録しています。</p>
         </div>
         <div class="quick-actions">
+          <button data-action="open-source" class="primary">原文画像 213問（新規60問）</button>
+          <button data-action="start-v27" class="secondary">対策強化問題 10問</button>
+          <button data-action="start-v27-20" class="secondary">対策強化問題 20問</button>
           <button data-action="start-v26" class="primary">今回の予想問題 10問</button>
           <button data-action="start-v26-20" class="secondary">今回の予想問題 20問</button>
           <button data-action="open-v26-terms" class="secondary">今回の追加カード</button>
@@ -147,6 +153,59 @@
         <h2>直近の模試・演習結果</h2>
         <div id="historyList" class="history-list"></div>
       </section>
+    </section>
+
+    <section id="sourceScreen" class="screen">
+      <div class="toolbar">
+        <button data-action="go-home" class="ghost">← ホームへ</button>
+        <h2>提供画像の原文演習</h2>
+      </div>
+      <article class="panel source-practice-panel">
+        <p class="source-intro">提供いただいた画像の<strong>設問と4つの選択肢を、そのまま表示</strong>します。画像内の選択肢番号は固定です。正答表が同梱されていないため、最初は未採点の回答記録となります。公式教材で正答を確認できた問題は、下部から番号を登録できます。</p>
+        <div class="source-toolbar">
+          <label for="sourceGroupSelect">問題セット
+            <select id="sourceGroupSelect">
+              <option value="2026-11-18">11/18 新規 60問</option>
+              <option value="2026-11-12-pm">11/12 午後 60問</option>
+              <option value="2026-11-12-am">11/12 午前以前 93問</option>
+              <option value="all">全213問</option>
+            </select>
+          </label>
+          <button id="sourceJumpUnreviewed" class="ghost">未学習へ移動</button>
+          <button id="sourceJumpRandom" class="ghost">ランダムに出題</button>
+        </div>
+        <div class="source-info-row">
+          <span id="sourceProgressLabel" class="pill muted-pill">0 / 60</span>
+          <span id="sourceReviewProgress" class="source-muted">原文画像 213枚</span>
+        </div>
+        <div id="sourceImageTitle" class="source-image-title">問題を読み込み中...</div>
+        <img id="sourceQuestionImage" class="source-question-image" src="" alt="提供された設問と選択肢の原文画像" />
+        <p class="source-answer-caption">画像に書かれた選択肢を読んで、回答番号を選んでください。</p>
+        <div id="sourceAnswerButtons" class="source-answer-buttons">
+          <button data-source-choice="1" class="choice-btn">1</button>
+          <button data-source-choice="2" class="choice-btn">2</button>
+          <button data-source-choice="3" class="choice-btn">3</button>
+          <button data-source-choice="4" class="choice-btn">4</button>
+        </div>
+        <label class="uncertain-row"><input id="sourceUncertainCheck" type="checkbox" /> 迷った／復習対象にする</label>
+        <p id="sourceAnswerNotice" class="source-answer-notice" role="status">番号を選択すると学習記録に保存します。</p>
+        <div class="source-navigation">
+          <button id="sourcePrevBtn" class="ghost">← 前の問題</button>
+          <button id="sourceNextBtn" class="primary">次の問題 →</button>
+        </div>
+        <details class="source-key-details">
+          <summary>公式教材の正答を登録・修正する（任意）</summary>
+          <p class="source-muted">公式の解答を確認した場合だけ、その番号を登録してください。登録した番号はご自身の回答と照合します。登録情報もGoogle同期の対象です。</p>
+          <div id="sourceKeyButtons" class="source-key-buttons">
+            <button data-source-key="1" class="ghost">正答 1</button>
+            <button data-source-key="2" class="ghost">正答 2</button>
+            <button data-source-key="3" class="ghost">正答 3</button>
+            <button data-source-key="4" class="ghost">正答 4</button>
+            <button data-source-key="0" class="ghost">未登録に戻す</button>
+          </div>
+          <p id="sourceKeyStatus" class="source-muted">この問題の正答は未登録です。</p>
+        </details>
+      </article>
     </section>
 
     <section id="categoryScreen" class="screen">
@@ -222,6 +281,13 @@
         </div>
         <div id="historyDetailList" class="history-list"></div>
       </section>
+      <section class="panel">
+        <div class="panel-title-row">
+          <h3>原文画像の学習履歴</h3>
+          <span class="pill muted-pill">直近20件・未採点を含む</span>
+        </div>
+        <div id="historySourceList" class="history-list"></div>
+      </section>
     </section>
 
     <section id="quizScreen" class="screen">
@@ -263,7 +329,7 @@
   </main>
 
   <footer>
-    <p>このアプリは非公式の学習補助ツールです。掲載問題はオリジナルで、公式の試験問題・スコア換算ではありません。</p>
+    <p>このアプリは非公式の学習補助ツールです。原文画像はユーザー提供教材の個人学習用です。採点付き問題はオリジナルで、公式スコア換算ではありません。</p>
   </footer>
 
     </div><!-- /.workspace -->
